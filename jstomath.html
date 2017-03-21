@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>简单的计算器</title>
+	<style type="text/css">
+		a{text-decoration: none;}
+		.wrap{width: 362px;height: 520px;background: #dddddd;margin: 50px auto;border: 1px solid #000000;box-shadow: 1px 1px 1px #000000;padding: 19px;position: relative;}
+		#textarea{width: 340px;height: 50px;resize: none;border: 1px solid #000000;padding: 5px 10px;margin: 0px auto;background: #000000;position: relative;overflow: hidden;}
+		#textarea span{float: right;color: #ffffff;font-size: 25px;line-height: 50px; position: absolute;right: 10px;height: 50px;}
+		#textarea #move_box{width: 100%;height: 50px;position:absolute;top:0px;left: 0px;}
+		#textarea .top1{top:5px;}
+		#textarea .top2{top:60px;}
+		#textarea #show{height: 30px;width: 2px;background:rgba(0,255,0,1);overflow: hidden;position: absolute;right: 8px;top: 15px;}
+		#wordpress{width: 360px;height: 450px;background: #dddddd;border: 1px solid #ffffff;margin: 20px auto;position: relative;}
+		#wordpress a{display: block;width: 88px;height: 88px;border: 1px dotted #ffffff;float: left;line-height: 88px;font-size: 30px;color: #ffffff;text-align: center;background: rgba(0,0,0,0.7);}
+		#wordpress a:hover{opacity: 0.5;}
+		#wordpress a:active{background:rgba(0,255,0,1);}
+		#wordpress a:nth-of-type(16){position: absolute;top: 359px;left: 0px;width: 177px;text-align: left;text-indent: 1.2em;}
+		#wordpress a:nth-of-type(17){position: absolute;top: 359px;left: 179px;}
+		#wordpress a:nth-of-type(18){position: absolute;top: 269px;left: 269px;height: 178px;line-height: 178px;}
+
+	</style>
+	<script type="text/javascript">
+		window.onload = function(){
+			var Txt = document.getElementById('textarea');//获取计算机屏幕元素
+			var Box = document.getElementById('wordpress');//获取模拟键盘
+			var Blur = document.getElementById('show');//获取闪烁光标
+			var Span = Txt.getElementsByTagName('span');//获取显示屏中存储计算结果的文本
+			var Btn = Box.getElementsByTagName('a');//获取所有可点击的模块
+			var MoveBox = document.getElementById('move_box');
+			var PutStr = '';//用于存储显示屏中文本的字符串str
+			var GetStr = '';//用于返回到计算函数中的程序
+			var timer = null;//闪烁控制计时器
+			var onoff = true;//闪烁控制开关，每秒变化一次
+			var Textarr = ['÷','×','+','.'];//用于判断第一位和相邻不允许出现同类型计算符号数组
+			var Textarr1 = ['0','1','2','3','4','5','6','7','8','9','-'];//用于判断数字和符号可交替出现
+			var Onset = false;//楼上两行的数组切换判断开关
+			var num = null;//给所有的可点击模块加索引
+
+			// Span[0].style.top = '5px';//计算结果滑动
+			// Span[1].style.top = '55px';//计算结果滑动
+
+			//焦点闪烁
+			Blurshow();
+			function Blurshow(){
+				timer = setInterval(function(){
+					if(onoff){
+						Blur.style.display = 'none';
+					}else{
+						Blur.style.display = 'block';
+					}
+					onoff = !onoff;
+				},1000)
+			}
+			//开始计算咯~~
+			//计算前准备工作，整理数据啦~~~
+			for(var i=0;i<Btn.length;i++){
+				Btn[i].index = i;//添加索引，为了后边调用
+				Btn[i].onclick = function(){
+					num = this.index;//这个就是调用当前click事件的索引哈
+					if(this.index==1||this.index==2||this.index==12){
+						Textstr();//×÷+三个符号不能直接加在最开始符号可以的哦，但不要烂用，因为会报错
+					}else if(this.index==0){
+						PutStr = '';
+						GetStr = '';
+						Span[0].innerHTML = PutStr;//第一个C键清空所有的显示屏内容，重新输入吧乖孩子~
+					}else if(this.index==3){
+						PutStr = PutStr.substring(0,PutStr.length-1);
+						GetStr = GetStr.substring(0,GetStr.length-1);
+						Span[0].innerHTML = PutStr;//删除一个字符，^_^
+					}else if(this.index==17){//计算最终的结果，
+						GetStr=eval(GetStr);
+						Span[0].innerHTML = PutStr;
+						Span[1].innerHTML = GetStr;
+						PutStr = GetStr;
+						doMove(MoveBox,'top',3,-55,function(){//这个是运动函数doMove下边有封装好的函数哦，配合getStyle一起用的
+							Span[0].innerHTML = GetStr;
+							Span[1].innerHTML = '';
+							MoveBox.style.top = '0px';
+						});
+
+					}else{
+						Textstr();
+					}
+					
+				}	
+			}
+			//用于阻止第一个出现的字符串是计算符号（暂时不支持符号提前，修改好再说）
+			function Textstr(){
+				var Thisvalue = Btn[num].innerHTML;
+				var Thisname = Btn[num].name;
+				for(var i=0;i<Textarr.length;i++){
+					if(Thisvalue == Textarr[i]){
+						if(Onset){
+							PutStr += Thisvalue;
+							GetStr += Thisname;
+							Onset = false;
+						}
+					}
+				}//第一个for循环操作不能第一个为计算字符和相邻不能为计算字符，减法除外哈，这丫特别~！！！！
+				for(var j=0;j<Textarr1.length;j++){
+					if(Thisvalue == Textarr1[j]){
+						Onset = true;	
+					}
+				}//数字插入中间的话可以输入，无视楼上那傻逼for
+				if(Onset ==true){
+					PutStr += Thisvalue;
+					GetStr += Thisname;
+				}//嘿嘿，这个是判断楼上哪个逗比，插入数字字符啥的，不能写一起，逻辑原因必须写开，想了好久--郁闷
+				Span[0].innerHTML = PutStr;//赋值，给显示框和需要计算的框里边填充内容，不然你给我啊？
+				Span[1].innerHTML = GetStr;
+			}
+			//下边的封装有点麻烦，嗯...我就不扯啦哈哈哈哈，慢慢看吧
+			//运动函数封装
+			function doMove ( obj, attr, dir, target, endFn ) {
+	
+				dir = parseInt(getStyle( obj, attr )) < target ? dir : -dir;
+				
+				clearInterval( obj.timer );
+				
+				obj.timer = setInterval(function () {
+					
+					var speed = parseInt(getStyle( obj, attr )) + dir;			// 步长
+					
+					if ( speed > target && dir > 0 ||  speed < target && dir < 0  ) {
+						speed = target;
+					}
+					
+					obj.style[attr] = speed + 'px';
+					console.log(obj.style[attr]);
+					
+					if ( speed == target ) {
+						clearInterval( obj.timer );
+						
+						/*
+						if ( endFn ) {
+							endFn();
+						}
+						*/
+						endFn && endFn();
+						
+					}
+					
+				}, 30);
+			}
+			//用来获取元素在html中的属性的，抓去他的css样式
+			function getStyle ( obj, attr ) { return obj.currentStyle?obj.currentStyle[attr] : getComputedStyle( obj )[attr]; }
+
+			
+		}
+	</script>
+</head>
+<body>
+	<div class="wrap">
+		<p style="color: red;position: absolute;top:-65px;left: 0px;font-size: 15px;font-weight: bold;max-width: 420px;">提示：有两个bug，1、计算结果以后无法调用Del键盘，报错，不知道为什么...2、‘0’可以无限加搞头晕就没做判断了，没事别瞎打0玩哈...[也可以加其他函数，看你咯~]</p>
+		<div id="textarea">
+			<div id="move_box">
+				<span class="top1"></span><span class="top2">123</span>
+			</div>
+			<div id="show"></div>
+		</div>
+		<div id="wordpress">
+			<a href="javascript:;" name="C">C</a>
+			<a href="javascript:;" name="/">÷</a>
+			<a href="javascript:;" name="*">×</a>
+			<a href="javascript:;" name="Del">Del</a>
+			<a href="javascript:;" name="7">7</a>
+			<a href="javascript:;" name="8">8</a>
+			<a href="javascript:;" name="9">9</a>
+			<a href="javascript:;" name="-">-</a>
+			<a href="javascript:;" name="4">4</a>
+			<a href="javascript:;" name="5">5</a>
+			<a href="javascript:;" name="6">6</a>
+			<a href="javascript:;" name="+">+</a>
+			<a href="javascript:;" name="1">1</a>
+			<a href="javascript:;" name="2">2</a>
+			<a href="javascript:;" name="3">3</a>
+			<a href="javascript:;" name="0">0</a>
+			<a href="javascript:;" name=".">.</a>
+			<a href="javascript:;" name="=">=</a>
+		</div>
+	</div>
+</body>
+</html>
